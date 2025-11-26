@@ -6,11 +6,21 @@ public class RentalSystem {
     private List<Vehicle> vehicles = new ArrayList<>();
     private List<Customer> customers = new ArrayList<>();
     private RentalHistory rentalHistory = new RentalHistory();
+    private static final RentalSystem system = new RentalSystem(); // new singleton object
 
     public void addVehicle(Vehicle vehicle) {
         vehicles.add(vehicle);
     }
-
+    
+    private RentalSystem() { // private constructor to prevent objects being made elsewhere.
+    	
+    }
+    
+    public static RentalSystem getInstance() { // public access method.
+    	return system;
+    }
+    
+    
     public void addCustomer(Customer customer) {
         customers.add(customer);
     }
