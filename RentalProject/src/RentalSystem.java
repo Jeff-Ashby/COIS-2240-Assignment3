@@ -3,6 +3,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.io.FileWriter; // import file writing libraries.
 import java.io.IOException;
+import java.io.File; // import file reading libraries
+import java.io.FileNotFoundException;
+import java.util.Scanner;
 
 public class RentalSystem {
 	private List<Vehicle> vehicles = new ArrayList<>();
@@ -16,7 +19,7 @@ public class RentalSystem {
 	}
 
 	private RentalSystem() { // private constructor to prevent objects being made elsewhere.
-
+		this.loadData();
 	}
 
 	public static RentalSystem getInstance() { // public access method.
@@ -30,8 +33,10 @@ public class RentalSystem {
 
 	public void saveVehicle(Vehicle v) { // void to write vehicle history to a .txt file.
 		try {
-			FileWriter writer = new FileWriter("vehicles.txt");
+			FileWriter writer = new FileWriter("vehicles.txt", true);
 			writer.write(v.getInfo());
+			writer.write("\n");
+
 			writer.close();
 		} catch (IOException e) {
 			System.err.println("Error writing to file: " + e.getMessage());
@@ -40,18 +45,20 @@ public class RentalSystem {
 
 	public void saveCustomer(Customer c) { // void to write customer history to a .txt file.
 		try {
-			FileWriter writer = new FileWriter("customers.txt");
+			FileWriter writer = new FileWriter("customers.txt", true);
 			writer.write(c.toString());
+			writer.write("\n");
 			writer.close();
 		} catch (IOException e) {
 			System.err.println("Error writing to file: " + e.getMessage());
 		}
 	}
-	
+
 	public void saveRecord(RentalRecord r) { // void to write record history to a .txt file.
 		try {
-			FileWriter writer = new FileWriter("rental_records.txt");
+			FileWriter writer = new FileWriter("rental_records.txt", true);
 			writer.write(r.toString());
+			writer.write("\n");
 			writer.close();
 		} catch (IOException e) {
 			System.err.println("Error writing to file: " + e.getMessage());
@@ -62,7 +69,7 @@ public class RentalSystem {
 		if (vehicle.getStatus() == Vehicle.VehicleStatus.Available) {
 			vehicle.setStatus(Vehicle.VehicleStatus.Rented);
 			// create record object, then add it and save it to the .txt file
-			RentalRecord record = new RentalRecord(vehicle, customer, date, amount, "RENT"); 
+			RentalRecord record = new RentalRecord(vehicle, customer, date, amount, "RENT");
 			rentalHistory.addRecord(record);
 			this.saveRecord(record);
 			System.out.println("Vehicle rented to " + customer.getCustomerName());
@@ -70,7 +77,6 @@ public class RentalSystem {
 			System.out.println("Vehicle is not available for renting.");
 		}
 	}
-	
 
 	public void returnVehicle(Vehicle vehicle, Customer customer, LocalDate date, double extraFees) {
 		if (vehicle.getStatus() == Vehicle.VehicleStatus.Rented) {
@@ -150,6 +156,94 @@ public class RentalSystem {
 			}
 			System.out.println();
 		}
+	}
+
+	private void loadData() {
+		try (Scanner scanner = new Scanner(new File("vehicles.txt"))) { // this is the portion that loads the vehicles.
+			while (scanner.hasNextLine()) {
+				String line = scanner.nextLine();
+
+				String[] data = line.split("\\|"); // split and trim the data
+				for (int i = 0; i < data.length; i++) {
+					data[i] = data[i].trim();
+				}
+
+				if (data[7].startsWith("Seats: ")) { // is a car
+					Vehicle v = null;
+					v = new Car(data[2], data[3], Integer.valueOf(data[4]), Integer.valueOf(data[7].split(": ")[1]));
+					v.setLicensePlate(data[1]);
+					vehicles.add(v);
+				} else if (data[7].startsWith("Accessible: ")) { // is a bus
+					Vehicle v = null;
+					boolean access;
+					if (data[7].contains("Yes")) {
+						access = true;
+					} else {
+						access = false;
+					}
+					v = new Minibus(data[2], data[3], Integer.valueOf(data[4]), access);
+					v.setLicensePlate(data[1]);
+					vehicles.add(v);
+				} else { // is a truck
+					Vehicle v = null;
+					boolean trailer;
+					if (data[8].contains("Yes")) {
+						trailer = true;
+					} else {
+						trailer = false;
+					}
+					v = new PickupTruck(data[2], data[3], Integer.valueOf(data[4]),
+							Double.valueOf(data[7].split(": ")[1]), trailer);
+					v.setLicensePlate(data[1]);
+					vehicles.add(v);
+				}
+
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		try (Scanner scanner = new Scanner(new File("customers.txt"))) { // this is the portion that loads the customers.
+			while (scanner.hasNextLine()) {
+				String line = scanner.nextLine();
+
+				String[] data = line.split("\\|"); // split and trim the data
+				for (int i = 0; i < data.length; i++) {
+					data[i] = data[i].trim();
+				}
+				// finally add the customer to the list
+				Customer c = new Customer(Integer.valueOf(data[0].split(": ")[1]), data[1].split(": ")[1]);
+				customers.add(c);
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		try (Scanner scanner = new Scanner(new File("rental_records.txt"))) { // this is the portion that loads the records.
+			while (scanner.hasNextLine()) {
+				String line = scanner.nextLine();
+
+				String[] data = line.split("\\|"); // split and trim the data
+				for (int i = 0; i < data.length; i++) {
+					data[i] = data[i].trim();
+				}
+				Customer cust = null; // find the customer being dealt with in this record by name
+				for (Customer c : customers) {
+					if (c.getCustomerName().equals(data[2].split(": ")[1])) {
+						cust = c;
+					}
+				}
+				Vehicle veh = this.findVehicleByPlate(data[1].split(": ")[1]); // find the vehicle being dealt with in this record by license plate.
+				
+				
+				RentalRecord r = new RentalRecord(veh, cust, LocalDate.parse(data[3].split(": ")[1]), Double.parseDouble(data[4].split(": ")[1].replace("$", "")), data[0]);
+				rentalHistory.addRecord(r);
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	public Vehicle findVehicleByPlate(String plate) {
