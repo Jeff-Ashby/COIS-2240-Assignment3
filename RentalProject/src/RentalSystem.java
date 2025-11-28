@@ -13,9 +13,15 @@ public class RentalSystem {
 	private RentalHistory rentalHistory = new RentalHistory();
 	private static final RentalSystem system = new RentalSystem(); // new singleton object
 
-	public void addVehicle(Vehicle vehicle) {
-		this.saveVehicle(vehicle); // saves vehicle info to the .txt file
-		vehicles.add(vehicle);
+	public boolean addVehicle(Vehicle vehicle) {
+		if (this.findVehicleByPlate(vehicle.getLicensePlate()) == null) {
+			this.saveVehicle(vehicle); // saves vehicle info to the .txt file
+			vehicles.add(vehicle);
+			return true;
+		} else {
+			System.out.println("Error, vehicle with that license plate already exists");
+			return false;
+		}
 	}
 
 	private RentalSystem() { // private constructor to prevent objects being made elsewhere.
@@ -26,9 +32,14 @@ public class RentalSystem {
 		return system;
 	}
 
-	public void addCustomer(Customer customer) {
-		this.saveCustomer(customer); // saves customer info to the .txt file
-		customers.add(customer);
+	public boolean addCustomer(Customer customer) {
+		if (this.findCustomerById(customer.getCustomerId()) == null) {
+			this.saveCustomer(customer); // saves customer info to the .txt file
+			customers.add(customer);
+			return true;
+		} else {
+			return false; // VehicleRentalApp handles the error message
+		}
 	}
 
 	public void saveVehicle(Vehicle v) { // void to write vehicle history to a .txt file.
@@ -233,10 +244,11 @@ public class RentalSystem {
 						cust = c;
 					}
 				}
-				Vehicle veh = this.findVehicleByPlate(data[1].split(": ")[1]); // find the vehicle being dealt with in this record by license plate.
-				
-				
-				RentalRecord r = new RentalRecord(veh, cust, LocalDate.parse(data[3].split(": ")[1]), Double.parseDouble(data[4].split(": ")[1].replace("$", "")), data[0]);
+				Vehicle veh = this.findVehicleByPlate(data[1].split(": ")[1]); // find the vehicle being dealt with in
+																				// this record by license plate.
+
+				RentalRecord r = new RentalRecord(veh, cust, LocalDate.parse(data[3].split(": ")[1]),
+						Double.parseDouble(data[4].split(": ")[1].replace("$", "")), data[0]);
 				rentalHistory.addRecord(r);
 			}
 
