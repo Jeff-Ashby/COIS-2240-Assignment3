@@ -15,6 +15,13 @@ public abstract class Vehicle {
         this.status = VehicleStatus.Available;
         this.licensePlate = null;
     }
+    
+    private boolean isValidPlate(String plate) { // private method to verify if a plate is not null, empty, and follows correct syntax
+        if (plate == null || plate.equals("")) {
+            return false;
+        }
+        return plate.matches("[A-Z]{3}\\d{3}");
+    }
 
 	private String capitalize(String input) { // new method to reduce redundancy
 		if (input == null || input.isEmpty())
@@ -27,8 +34,12 @@ public abstract class Vehicle {
         this(null, null, 0);
     }
 
-    public void setLicensePlate(String plate) {
-        this.licensePlate = plate == null ? null : plate.toUpperCase();
+    public void setLicensePlate(String plate) { // added verification with private method
+    	if (this.isValidPlate(plate)) {
+    		this.licensePlate = plate == null ? null : plate.toUpperCase();
+    	} else {
+    		throw new IllegalArgumentException("Error, plate does not follow correct pattern. (ABC123)");
+    	}
     }
 
     public void setStatus(VehicleStatus status) {

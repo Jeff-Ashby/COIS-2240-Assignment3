@@ -55,9 +55,13 @@ public class VehicleRentalApp {
 		            	vehicle = null;
 		            }
                     
+                    
                     if (vehicle != null){
+                    	try { // new try catch for license plate verification
 	                    vehicle.setLicensePlate(plate);
-	                    
+                    	} catch (IllegalArgumentException e) {
+	                    	System.out.println(e);
+	                    }
 	                    if (rentalSystem.addVehicle(vehicle)) {
 	                    	System.out.println("Vehicle added successfully.");
 	                    }
@@ -65,6 +69,7 @@ public class VehicleRentalApp {
                     else {
 	                    System.out.println("Vehicle not added successfully.");
                     }
+                    
                     break;
 
                 case 2:
